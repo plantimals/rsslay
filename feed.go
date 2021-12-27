@@ -61,8 +61,10 @@ func getFeedURL(url string) string {
 			if href == "" {
 				return ""
 			}
-			feedurl, _ := urljoin(url, href)
-			return feedurl
+			if !strings.HasPrefix(href, "http") {
+				href, _ = urljoin(url, href)
+			}
+			return href
 		}
 	}
 
