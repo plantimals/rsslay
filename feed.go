@@ -55,12 +55,15 @@ func itemToTextNote(pubkey string, item *gofeed.Item) event.Event {
 	if item.Title != "" {
 		content = "**" + item.Title + "**\n\n"
 	}
+
 	if item.Description != "" {
 		content += item.Description
-	} else if len(item.Content) > 200 {
-		content += item.Description[0:199] + "…"
 	} else {
 		content += item.Description
+	}
+
+	if len(content) > 200 {
+		content += content[0:199] + "…"
 	}
 	content += "\n\n" + item.Link
 

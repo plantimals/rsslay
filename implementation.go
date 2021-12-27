@@ -14,7 +14,8 @@ import (
 )
 
 type RSSlay struct {
-	Secret string `envconfig:"SECRET" required:"true"`
+	Secret string `envconfig:"SECRET" required`
+	Domain string `envconfig:"DOMAIN" required`
 
 	updates     chan event.Event
 	lastEmitted map[string]time.Time
