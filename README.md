@@ -1,1 +1,3 @@
-A Nostr relay that only emits events from RSS feeds.
+A Nostr relay that emits events from RSS feeds.
+
+![](screenshot.png)
