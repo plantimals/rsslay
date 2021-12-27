@@ -74,6 +74,11 @@ func handleWebpage(w http.ResponseWriter, r *http.Request) {
 
 		H("h2", "Some of the existing feeds"),
 		H("table", items),
+		H("h2", "Source Code"),
+		H("p", "You can find it at ",
+			H("a", Attr{"href": "https://github.com/fiatjaf/rsslay"},
+				"https://github.com/fiatjaf/rsslay"),
+		),
 	)
 
 	w.Header().Set("content-type", "text/html")
@@ -87,13 +92,20 @@ func handleWebpage(w http.ResponseWriter, r *http.Request) {
 func handleCreateFeed(w http.ResponseWriter, r *http.Request) {
 	url := r.URL.Query().Get("url")
 
-	if _, err := parseFeed(url); err != nil {
+	feedurl := getFeedURL(url)
+	if feedurl == "" {
+		w.WriteHeader(400)
+		fmt.Fprint(w, "couldn't find a feed url")
+		return
+	}
+
+	if _, err := parseFeed(feedurl); err != nil {
 		w.WriteHeader(400)
 		fmt.Fprint(w, "bad feed: "+err.Error())
 		return
 	}
 
-	sk := privateKeyFromFeed(url)
+	sk := privateKeyFromFeed(feedurl)
 	s, err := bip340.ParsePrivateKey(sk)
 	if err != nil {
 		w.WriteHeader(500)
@@ -104,7 +116,7 @@ func handleCreateFeed(w http.ResponseWriter, r *http.Request) {
 
 	j, _ := json.Marshal(Entity{
 		PrivateKey: sk,
-		URL:        url,
+		URL:        feedurl,
 	})
 
 	if err := b.db.Set([]byte(pubkey), j, nil); err != nil {
@@ -113,8 +125,8 @@ func handleCreateFeed(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	relayer.Log.Info().Str("url", url).Str("pubkey", pubkey).Msg("saved feed")
+	relayer.Log.Info().Str("url", feedurl).Str("pubkey", pubkey).Msg("saved feed")
 
-	fmt.Fprintf(w, "url   : %s\npubkey: %s", url, pubkey)
+	fmt.Fprintf(w, "url   : %s\npubkey: %s", feedurl, pubkey)
 	return
 }
