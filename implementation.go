@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/cockroachdb/pebble"
@@ -18,7 +19,7 @@ type RSSlay struct {
 	Domain string `envconfig:"DOMAIN" required`
 
 	updates     chan event.Event
-	lastEmitted map[string]time.Time
+	lastEmitted sync.Map
 	db          *pebble.DB
 }
 
@@ -43,33 +44,51 @@ func (b *RSSlay) Init() error {
 
 	go func() {
 		time.Sleep(20 * time.Minute)
-		relayer.Log.Info().Msg("checking for updates")
 
-		iter := b.db.NewIter(nil)
-		for iter.First(); iter.Valid(); iter.Next() {
-			pubkey := string(iter.Key())
+		filters := relayer.GetListeningFilters()
+		relayer.Log.Info().Int("filters active", len(filters)).
+			Msg("checking for updates")
 
-			var entity Entity
-			if err := json.Unmarshal(iter.Value(), &entity); err != nil {
-				relayer.Log.Error().Err(err).Str("key", pubkey).
-					Str("val", string(iter.Value())).
-					Msg("got invalid json from db")
-				continue
-			}
+		for _, filter := range filters {
+			if ((filter.Kind != nil && *filter.Kind == event.KindTextNote) ||
+				filter.Kind == nil) &&
+				filter.TagProfile == "" && filter.TagEvent == "" && filter.ID == "" {
 
-			feed, err := parseFeed(entity.URL)
-			if err != nil {
-				relayer.Log.Warn().Err(err).Str("url", entity.URL).
-					Msg("failed to parse feed")
-				continue
-			}
+				for _, pubkey := range filter.Authors {
+					if val, closer, err := b.db.Get([]byte(pubkey)); err == nil {
+						defer closer.Close()
 
-			for _, item := range feed.Items {
-				evt := itemToTextNote(pubkey, item)
-				evt.Sign(entity.PrivateKey)
-				b.updates <- evt
+						var entity Entity
+						if err := json.Unmarshal(val, &entity); err != nil {
+							relayer.Log.Error().Err(err).Str("key", pubkey).
+								Str("val", string(val)).
+								Msg("got invalid json from db")
+							continue
+						}
+
+						feed, err := parseFeed(entity.URL)
+						if err != nil {
+							relayer.Log.Warn().Err(err).Str("url", entity.URL).
+								Msg("failed to parse feed")
+							continue
+						}
+
+						if filter.Kind == nil || *filter.Kind == event.KindTextNote {
+							for _, item := range feed.Items {
+								evt := itemToTextNote(pubkey, item)
+								last, ok := b.lastEmitted.Load(entity.URL)
+								if !ok || last.(uint32) < evt.CreatedAt {
+									evt.Sign(entity.PrivateKey)
+									b.updates <- evt
+									b.lastEmitted.Store(entity.URL, last)
+								}
+							}
+						}
+					}
+				}
 			}
 		}
+
 	}()
 
 	return nil
@@ -119,6 +138,7 @@ func (b *RSSlay) QueryEvents(filter *filter.EventFilter) ([]event.Event, error) 
 			}
 
 			if filter.Kind == nil || *filter.Kind == event.KindTextNote {
+				var last uint32 = 0
 				for _, item := range feed.Items {
 					evt := itemToTextNote(pubkey, item)
 
@@ -130,8 +150,15 @@ func (b *RSSlay) QueryEvents(filter *filter.EventFilter) ([]event.Event, error) 
 					}
 
 					evt.Sign(entity.PrivateKey)
+
+					if evt.CreatedAt > last {
+						last = evt.CreatedAt
+					}
+
 					evts = append(evts, evt)
 				}
+
+				b.lastEmitted.Store(entity.URL, last)
 			}
 		}
 	}
