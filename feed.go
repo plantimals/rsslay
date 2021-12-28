@@ -31,10 +31,12 @@ var types = []string{
 	"rss+xml",
 	"atom+xml",
 	"feed+json",
+	"text/xml",
+	"application/xml",
 }
 
 func getFeedURL(url string) string {
-	resp, err := client.Head(url)
+	resp, err := client.Get(url)
 	if err != nil || resp.StatusCode >= 300 {
 		return ""
 	}
@@ -47,10 +49,6 @@ func getFeedURL(url string) string {
 	}
 
 	if strings.Contains(ct, "text/html") {
-		resp, err = http.Get(url)
-		if err != nil || resp.StatusCode >= 300 {
-			return ""
-		}
 		doc, err := goquery.NewDocumentFromReader(resp.Body)
 		if err != nil {
 			return ""
@@ -59,7 +57,7 @@ func getFeedURL(url string) string {
 		for _, typ := range types {
 			href, _ := doc.Find(fmt.Sprintf("link[type*='%s']", typ)).Attr("href")
 			if href == "" {
-				return ""
+				continue
 			}
 			if !strings.HasPrefix(href, "http") {
 				href, _ = urljoin(url, href)
