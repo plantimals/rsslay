@@ -8,6 +8,7 @@ require (
 	github.com/fiatjaf/bip340 v1.1.0
 	github.com/fiatjaf/go-nostr v0.2.1
 	github.com/fiatjaf/relayer v1.0.3
+	github.com/grokify/html-strip-tags-go v0.0.1 // indirect
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/kr/pretty v0.3.0 // indirect
 	github.com/mmcdole/gofeed v1.1.3

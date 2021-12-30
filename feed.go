@@ -12,6 +12,7 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/fiatjaf/go-nostr/event"
+	strip "github.com/grokify/html-strip-tags-go"
 	"github.com/mmcdole/gofeed"
 	"github.com/rif/cache2go"
 )
@@ -120,7 +121,7 @@ func itemToTextNote(pubkey string, item *gofeed.Item) event.Event {
 	if item.Title != "" {
 		content = "**" + item.Title + "**\n\n"
 	}
-	content += item.Description
+	content += strip.StripTags(item.Description)
 	if len(content) > 250 {
 		content += content[0:249] + "…"
 	}
