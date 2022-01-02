@@ -8,8 +8,7 @@ import (
 	"time"
 
 	"github.com/cockroachdb/pebble"
-	"github.com/fiatjaf/go-nostr/event"
-	"github.com/fiatjaf/go-nostr/filter"
+	"github.com/fiatjaf/go-nostr"
 	"github.com/fiatjaf/relayer"
 	"github.com/kelseyhightower/envconfig"
 )
@@ -18,7 +17,7 @@ type RSSlay struct {
 	Secret string `envconfig:"SECRET" required`
 	Domain string `envconfig:"DOMAIN" required`
 
-	updates     chan event.Event
+	updates     chan nostr.Event
 	lastEmitted sync.Map
 	db          *pebble.DB
 }
@@ -50,10 +49,7 @@ func (b *RSSlay) Init() error {
 			Msg("checking for updates")
 
 		for _, filter := range filters {
-			if ((filter.Kind != nil && *filter.Kind == event.KindTextNote) ||
-				filter.Kind == nil) &&
-				filter.TagProfile == "" && filter.TagEvent == "" && filter.ID == "" {
-
+			if filter.Kinds == nil || filter.Kinds.Contains(nostr.KindTextNote) {
 				for _, pubkey := range filter.Authors {
 					if val, closer, err := b.db.Get([]byte(pubkey)); err == nil {
 						defer closer.Close()
@@ -73,15 +69,13 @@ func (b *RSSlay) Init() error {
 							continue
 						}
 
-						if filter.Kind == nil || *filter.Kind == event.KindTextNote {
-							for _, item := range feed.Items {
-								evt := itemToTextNote(pubkey, item)
-								last, ok := b.lastEmitted.Load(entity.URL)
-								if !ok || last.(uint32) < evt.CreatedAt {
-									evt.Sign(entity.PrivateKey)
-									b.updates <- evt
-									b.lastEmitted.Store(entity.URL, last)
-								}
+						for _, item := range feed.Items {
+							evt := itemToTextNote(pubkey, item)
+							last, ok := b.lastEmitted.Load(entity.URL)
+							if !ok || last.(uint32) < evt.CreatedAt {
+								evt.Sign(entity.PrivateKey)
+								b.updates <- evt
+								b.lastEmitted.Store(entity.URL, last)
 							}
 						}
 					}
@@ -94,14 +88,14 @@ func (b *RSSlay) Init() error {
 	return nil
 }
 
-func (b *RSSlay) SaveEvent(_ *event.Event) error {
+func (b *RSSlay) SaveEvent(_ *nostr.Event) error {
 	return errors.New("we don't accept any events")
 }
 
-func (b *RSSlay) QueryEvents(filter *filter.EventFilter) ([]event.Event, error) {
-	var evts []event.Event
+func (b *RSSlay) QueryEvents(filter *nostr.EventFilter) ([]nostr.Event, error) {
+	var evts []nostr.Event
 
-	if filter.ID != "" || filter.TagProfile != "" || filter.TagEvent != "" {
+	if filter.IDs != nil || filter.TagP != nil || filter.TagE != nil {
 		return evts, nil
 	}
 
@@ -123,7 +117,7 @@ func (b *RSSlay) QueryEvents(filter *filter.EventFilter) ([]event.Event, error) 
 				continue
 			}
 
-			if filter.Kind == nil || *filter.Kind == event.KindSetMetadata {
+			if filter.Kinds == nil || filter.Kinds.Contains(nostr.KindSetMetadata) {
 				evt := feedToSetMetadata(pubkey, feed)
 
 				if filter.Since != 0 && evt.CreatedAt < filter.Since {
@@ -137,7 +131,7 @@ func (b *RSSlay) QueryEvents(filter *filter.EventFilter) ([]event.Event, error) 
 				evts = append(evts, evt)
 			}
 
-			if filter.Kind == nil || *filter.Kind == event.KindTextNote {
+			if filter.Kinds == nil || filter.Kinds.Contains(nostr.KindTextNote) {
 				var last uint32 = 0
 				for _, item := range feed.Items {
 					evt := itemToTextNote(pubkey, item)
@@ -166,6 +160,6 @@ func (b *RSSlay) QueryEvents(filter *filter.EventFilter) ([]event.Event, error) 
 	return evts, nil
 }
 
-func (b *RSSlay) InjectEvents() chan event.Event {
+func (b *RSSlay) InjectEvents() chan nostr.Event {
 	return b.updates
 }

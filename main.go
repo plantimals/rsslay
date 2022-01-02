@@ -1,12 +1,12 @@
 package main
 
 import (
-	"github.com/fiatjaf/go-nostr/event"
+	"github.com/fiatjaf/go-nostr"
 	"github.com/fiatjaf/relayer"
 )
 
 var b = &RSSlay{
-	updates: make(chan event.Event),
+	updates: make(chan nostr.Event),
 }
 
 func main() {

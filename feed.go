@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/fiatjaf/go-nostr/event"
+	"github.com/fiatjaf/go-nostr"
 	strip "github.com/grokify/html-strip-tags-go"
 	"github.com/mmcdole/gofeed"
 	"github.com/rif/cache2go"
@@ -89,7 +89,7 @@ func parseFeed(url string) (*gofeed.Feed, error) {
 	return feed, nil
 }
 
-func feedToSetMetadata(pubkey string, feed *gofeed.Feed) event.Event {
+func feedToSetMetadata(pubkey string, feed *gofeed.Feed) nostr.Event {
 	metadata := map[string]string{
 		"name":  feed.Title,
 		"about": feed.Description + "\n\n" + feed.Link,
@@ -104,11 +104,11 @@ func feedToSetMetadata(pubkey string, feed *gofeed.Feed) event.Event {
 		createdAt = *feed.PublishedParsed
 	}
 
-	evt := event.Event{
+	evt := nostr.Event{
 		PubKey:    pubkey,
 		CreatedAt: uint32(createdAt.Unix()),
-		Kind:      event.KindSetMetadata,
-		Tags:      event.Tags{},
+		Kind:      nostr.KindSetMetadata,
+		Tags:      nostr.Tags{},
 		Content:   string(content),
 	}
 	evt.ID = string(evt.Serialize())
@@ -116,7 +116,7 @@ func feedToSetMetadata(pubkey string, feed *gofeed.Feed) event.Event {
 	return evt
 }
 
-func itemToTextNote(pubkey string, item *gofeed.Item) event.Event {
+func itemToTextNote(pubkey string, item *gofeed.Item) nostr.Event {
 	content := ""
 	if item.Title != "" {
 		content = "**" + item.Title + "**\n\n"
@@ -135,11 +135,11 @@ func itemToTextNote(pubkey string, item *gofeed.Item) event.Event {
 		createdAt = *item.PublishedParsed
 	}
 
-	evt := event.Event{
+	evt := nostr.Event{
 		PubKey:    pubkey,
 		CreatedAt: uint32(createdAt.Unix()),
-		Kind:      event.KindTextNote,
-		Tags:      event.Tags{},
+		Kind:      nostr.KindTextNote,
+		Tags:      nostr.Tags{},
 		Content:   content,
 	}
 	evt.ID = string(evt.Serialize())

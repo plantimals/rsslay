@@ -75,10 +75,10 @@ github.com/fasthttp-contrib/websocket v0.0.0-20160511215533-1f3b11f56072/go.mod 
 github.com/fatih/structs v1.1.0/go.mod h1:9NiDSp5zOcgEDl+j00MP/WkGVPOlPRLejGD8Ga6PJ7M=
 github.com/fiatjaf/bip340 v1.1.0 h1:W+CnUU3RyqgMKS2S9t/r2l3L4D+sSkRtU4la7MlVBR8=
 github.com/fiatjaf/bip340 v1.1.0/go.mod h1:MxAz+5FQUTW4OT2gnCBC6Our486wmqf72ykZIrh7+is=
-github.com/fiatjaf/go-nostr v0.2.1 h1:oMNyNKA+9k675y/hyQ4z+qm90aVvfzpiMSFS5wQ5pfI=
-github.com/fiatjaf/go-nostr v0.2.1/go.mod h1:Uw7NI2zQE2QYgcT5495pZguoHoYRIrmXvLRO0eXhOs0=
-github.com/fiatjaf/relayer v1.0.3 h1:yLN6jbrt2xnTuZhAr99ZRhCyO2QFNZQE2EHnfVGT/dw=
-github.com/fiatjaf/relayer v1.0.3/go.mod h1:onYCVTI7Kv0VUT7mBPRwsi65V7OKW/qjnXTqcmbKQaQ=
+github.com/fiatjaf/go-nostr v0.4.1 h1:kYgdEFAojK0tuaYqt6FWs1uVw5QJJni6ShbQqfL3Gos=
+github.com/fiatjaf/go-nostr v0.4.1/go.mod h1:Uw7NI2zQE2QYgcT5495pZguoHoYRIrmXvLRO0eXhOs0=
+github.com/fiatjaf/relayer v1.1.0 h1:oxlF6CDI+Oe6Wp61WuxJViZWJpP10KteC3n7HSfoWbo=
+github.com/fiatjaf/relayer v1.1.0/go.mod h1:X3upkLs/K1/XWdgoLACcBJIOxSiAms4coZ+VkZyPLzk=
 github.com/flosch/pongo2 v0.0.0-20190707114632-bbf5a6c351f4/go.mod h1:T9YF2M40nIgbVgp3rreNmTged+9HrbNTIQf1PsaIiTA=
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
 github.com/fsnotify/fsnotify v1.4.9/go.mod h1:znqG4EE+3YCdAaPaxE2ZRY/06pZUdp0tY4IgpuI1SZQ=
